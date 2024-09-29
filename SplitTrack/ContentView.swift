@@ -2,90 +2,51 @@ import SwiftUI
 import AVFoundation
 
 struct ContentView: View {
-    @StateObject private var viewModel = ViewModel()
-
+    
+    @State private var showingCamera = false // Controls camera visibility
+    @State private var cameraAccessDenied = false // Controls alert if access is denied
+    
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            CameraView()
-                .edgesIgnoringSafeArea(.all)
-                .environmentObject(viewModel)
+        VStack(spacing: 20) {
+            Text("Welcome to SplitTrack!")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .padding()
             
-            VStack(alignment: .leading, spacing: 5) {
-                Text("Splits")
-                    .font(.system(size: 18))
+            Text("SplitTrack allows you to take photos or record videos with ease. Just click the button below to get started.")
+                .multilineTextAlignment(.center)
+                .padding()
+            
+            Button(action: requestCameraAccess) {
+                Text("Open Camera")
+                    .font(.title2)
                     .foregroundColor(.white)
-                    .padding([.leading, .top], 10)
-                    .background(Color.black.opacity(1))
-                    .cornerRadius(6)
-                
-                List(viewModel.splits, id: \.id) { split in
-                    HStack {
-                        Text("\(split.timeString) | \(split.totalElapsedTimeString)")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white)
-                            .padding(1)
-                            .background(Color.black.opacity(0.7))
-                            .cornerRadius(5)
-                    }
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                }
-                .listStyle(PlainListStyle())
-                .frame(width: 120, alignment: .leading)
-                
-                Spacer()
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(10)
+            }
+            .padding()
+            .alert(isPresented: $cameraAccessDenied) {
+                Alert(title: Text("Camera Access Denied"),
+                      message: Text("Please enable camera access in settings to use this feature."),
+                      dismissButton: .default(Text("OK")))
             }
             
-            VStack {
-                Spacer()
-                HStack {
-                    Button(action: {
-                        viewModel.toggleCamera()
-                    }) {
-                        Image(systemName: "camera.rotate")
-                            .font(.title)
-                            .foregroundColor(.white)
-                            .frame(width: 60, height: 60)
-                            .background(Color.gray.opacity(0.7))
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white, lineWidth: 2)
-                            )
-                    }
-                    .padding(.bottom, 50)
-                    .padding(.leading, 30)
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        if viewModel.isRecording {
-                            viewModel.stopRecording()
-                        } else {
-                            viewModel.startRecording()
-                        }
-                    }) {
-                        Text(viewModel.isRecording ? "Stop" : "Start")
-                            .font(.title)
-                            .foregroundColor(.white)
-                            .frame(width: 80, height: 80)
-                            .background(viewModel.isRecording ? Color.red : Color.green)
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white, lineWidth: 2)
-                            )
-                    }
-                    .padding(.bottom, 50)
-                    
-                    Spacer()
-                }
+            Spacer()
+        }
+        .sheet(isPresented: $showingCamera) {
+            CameraView(isShown: self.$showingCamera) // Camera view as a sheet
+        }
+    }
+    
+    // Request camera access and open the camera if allowed
+    func requestCameraAccess() {
+        AVCaptureDevice.requestAccess(for: .video) { granted in
+            if granted {
+                self.showingCamera = true
+            } else {
+                self.cameraAccessDenied = true
             }
-        }
-        .onAppear {
-            viewModel.setupOrientationObserver()
-        }
-        .onDisappear {
-            viewModel.removeOrientationObserver()
         }
     }
 }

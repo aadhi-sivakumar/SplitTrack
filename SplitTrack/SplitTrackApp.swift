@@ -1,12 +1,9 @@
 import SwiftUI
 
 @main
-struct SplitTrackApp: App 
-{
-    var body: some Scene
-    {
-        WindowGroup 
-        {
+struct YourApp: App {
+    var body: some Scene {
+        WindowGroup {
             ContentView()
         }
     }
